@@ -1,125 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AisleGo Android Walking Prototype</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AisleGo</title>
 <style>
-*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#17202a}
-header{background:#111827;color:white;padding:18px;text-align:center} header h1{margin:0;font-size:28px} header p{margin:5px 0 0;opacity:.8}
-main{max-width:520px;margin:auto;padding:14px}.card{background:white;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px #00000012}
-button{width:100%;border:0;border-radius:14px;padding:15px;margin:6px 0;font-size:17px;font-weight:bold;background:#2563eb;color:white}
-button.secondary{background:#e5e7eb;color:#111827} button.danger{background:#dc2626}
-.hidden{display:none}.big{font-size:42px;font-weight:bold;text-align:center}.muted{color:#6b7280}
-.progress{height:12px;background:#e5e7eb;border-radius:20px;overflow:hidden}.bar{height:100%;width:0;background:#2563eb}
-.item{padding:13px;border:1px solid #e5e7eb;border-radius:12px;margin:7px 0;display:flex;justify-content:space-between}
-.badge{padding:4px 8px;border-radius:8px;background:#eef2ff;color:#3730a3;font-size:12px}
-#log{font-size:12px;max-height:100px;overflow:auto;background:#111827;color:#d1d5db;padding:10px;border-radius:10px}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#18202d}
+header{background:#111827;color:white;text-align:center;padding:22px}
+header h1{margin:0;font-size:42px}
+header span{color:#ef4444}
+header p{margin:6px 0 0;font-size:18px;color:#d1d5db}
+main{max-width:600px;margin:auto;padding:15px}
+.card{background:white;border-radius:22px;padding:20px;margin-bottom:16px;box-shadow:0 3px 15px #0001}
+button{width:100%;padding:16px;margin-top:10px;border:0;border-radius:14px;background:#111827;color:white;font-size:18px;font-weight:bold}
+button.red{background:#ef4444}
+button.light{background:#e5e7eb;color:#111827}
+.big{text-align:center;font-size:52px;font-weight:bold;margin:10px}
+.stat{display:flex;justify-content:space-between;padding:14px;border:1px solid #ddd;border-radius:14px;margin-top:10px}
+#map{height:330px;background:#eef2f7;border-radius:18px;position:relative;overflow:hidden;border:2px solid #d1d5db}
+.grid{position:absolute;inset:0;background-image:linear-gradient(#d5d9df 1px,transparent 1px),linear-gradient(90deg,#d5d9df 1px,transparent 1px);background-size:40px 40px}
+#player{position:absolute;left:50%;top:50%;width:30px;height:30px;background:#2563eb;border:5px solid white;border-radius:50%;box-shadow:0 2px 8px #0005;transform:translate(-50%,-50%);z-index:5}
+#arrow{position:absolute;left:50%;top:50%;width:5px;height:65px;background:#2563eb;transform-origin:50% 100%;transform:translate(-50%,-100%) rotate(0deg);z-index:4;border-radius:5px}
+.item{padding:14px;border:1px solid #ddd;border-radius:14px;margin-top:9px;display:flex;justify-content:space-between}
+.badge{background:#eef2ff;color:#3730a3;padding:5px 9px;border-radius:8px}
+#status{text-align:center;color:#555;margin:10px}
 </style>
 </head>
+
 <body>
-<header><h1>Aisle<span style="color:#ef4444">G</span></h1><p>Indoor walking prototype</p></header>
+
+<header>
+<h1>Aisle<span>G</span></h1>
+<p>Indoor walking navigation</p>
+</header>
+
 <main>
-<section id="setup" class="card">
-<h2>1. Calibrate your phone</h2>
-<p>Hold your Android phone normally, with the screen facing up. Stand still for a few seconds, then walk naturally.</p>
-<button id="permission">Allow Motion Sensors</button>
-<button id="calibrate" class="secondary">Start Calibration</button>
-<div class="progress"><div id="bar" class="bar"></div></div>
-<p id="status" class="muted">Waiting for sensor permission.</p>
-</section>
 
-<section id="walk" class="card hidden">
-<h2>2. Walk to an item</h2>
-<div class="big"><span id="steps">0</span></div>
-<p style="text-align:center" class="muted">detected steps</p>
-<div class="item"><span>Distance estimate</span><b><span id="distance">0.0</span> m</b></div>
-<div class="item"><span>Heading</span><b><span id="heading">--</span>°</b></div>
-<button id="reset" class="secondary">Reset Walk</button>
-<button id="stop" class="danger">Stop</button>
-</section>
+<div class="card">
+<h2>1. Start AisleGo</h2>
+<button id="start">Allow Motion & Start</button>
+<div id="status">Waiting to start...</div>
+</div>
 
-<section class="card">
+<div class="card">
+<h2>Your position</h2>
+
+<div id="map">
+<div class="grid"></div>
+<div id="arrow"></div>
+<div id="player"></div>
+</div>
+
+<div class="stat">
+<span>Steps</span><b id="steps">0</b>
+</div>
+
+<div class="stat">
+<span>Distance</span><b id="distance">0.0 m</b>
+</div>
+
+<div class="stat">
+<span>Heading</span><b id="heading">0°</b>
+</div>
+
+<button class="light" id="reset">Reset Walk</button>
+</div>
+
+<div class="card">
 <h2>Test items</h2>
-<div class="item">TV 60" JVC <span class="badge">Lounge</span></div>
-<div class="item">Fan <span class="badge">Lounge</span></div>
-<div class="item">Microwave <span class="badge">Kitchen</span></div>
-<div class="item">Fridge <span class="badge">Kitchen</span></div>
-<div class="item">TV <span class="badge">Bedroom 1</span></div>
-<div class="item">TV <span class="badge">Bedroom 2</span></div>
-<div class="item">Bed <span class="badge">Master Bedroom</span></div>
-<div class="item">Bedside lamps <span class="badge">Master Bedroom</span></div>
-</section>
 
-<section class="card"><details><summary>Sensor information</summary><div id="log">No sensor data yet.</div></details></section>
+<div class="item">
+<span>TV 60" JVC</span>
+<span class="badge">Lounge</span>
+</div>
+
+<div class="item">
+<span>Fan</span>
+<span class="badge">Lounge</span>
+</div>
+
+<div class="item">
+<span>Microwave</span>
+<span class="badge">Kitchen</span>
+</div>
+
+<div class="item">
+<span>Fridge</span>
+<span class="badge">Kitchen</span>
+</div>
+
+<div class="item">
+<span>TV</span>
+<span class="badge">Bedroom 1</span>
+</div>
+
+<div class="item">
+<span>TV</span>
+<span class="badge">Bedroom 2</span>
+</div>
+
+<div class="item">
+<span>Bed</span>
+<span class="badge">Master Bedroom</span>
+</div>
+
+<div class="item">
+<span>Bedside lamps</span>
+<span class="badge">Master Bedroom</span>
+</div>
+
+</div>
+
 </main>
 
 <script>
-let permissionGranted=false, calibrated=false, walking=false;
-let steps=0, lastStep=0, peak=0, lastPeakTime=0, baseline=9.81, samples=[];
-let heading=0, stepLength=.72, lastMotion=0;
 
-const $=id=>document.getElementById(id);
-function log(t){$("log").textContent=t+"\\n"+$("log").textContent.slice(0,900)}
+let steps=0;
+let distance=0;
+let heading=0;
+let running=false;
+let lastStep=0;
+let lastTime=0;
+let gravity=9.8;
 
-async function requestPermission(){
- try{
-   if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){
-      const r=await DeviceMotionEvent.requestPermission();
-      permissionGranted=r==="granted";
-   } else permissionGranted=true;
-   if(permissionGranted){$("status").textContent="Motion sensors allowed. Tap Start Calibration."; $("permission").textContent="Sensors Ready ✓";}
-   else $("status").textContent="Motion permission was not granted.";
- }catch(e){$("status").textContent="Could not request sensors: "+e.message}
+const player=document.getElementById("player");
+const arrow=document.getElementById("arrow");
+
+function updateScreen(){
+
+document.getElementById("steps").textContent=steps;
+document.getElementById("distance").textContent=distance.toFixed(1)+" m";
+document.getElementById("heading").textContent=Math.round(heading)+"°";
+
+let pixels=steps*7;
+
+let rad=heading*Math.PI/180;
+
+let x=Math.sin(rad)*pixels;
+let y=-Math.cos(rad)*pixels;
+
+let maxX=135;
+let maxY=135;
+
+x=Math.max(-maxX,Math.min(maxX,x));
+y=Math.max(-maxY,Math.min(maxY,y));
+
+player.style.left="calc(50% + "+x+"px)";
+player.style.top="calc(50% + "+y+"px)";
+
+arrow.style.left="calc(50% + "+x+"px)";
+arrow.style.top="calc(50% + "+y+"px)";
+arrow.style.transform=
+"translate(-50%,-100%) rotate("+heading+"deg)";
 }
-$("permission").onclick=requestPermission;
 
 function motion(e){
- const a=e.accelerationIncludingGravity;
- if(!a)return;
- const mag=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
- lastMotion=mag;
- if(calibrated && walking){
-   const now=Date.now();
-   // Simple peak detector; this is a prototype, not survey-grade indoor positioning.
-   if(mag>baseline+2.0 && mag>peak && now-lastPeakTime>300){
-      peak=mag;
-      setTimeout(()=>{ if(peak===mag){steps++; lastPeakTime=Date.now(); peak=0; update()}},80);
-   }
- }
- if(!calibrated && samples.length<80) samples.push(mag);
-}
-function orientation(e){
- if(typeof e.alpha==="number"){heading=Math.round(e.alpha);$("heading").textContent=heading}
-}
-window.addEventListener("devicemotion",motion);
-window.addEventListener("deviceorientation",orientation);
 
-$("calibrate").onclick=()=>{
- if(!permissionGranted){$("status").textContent="Tap Allow Motion Sensors first.";return}
- samples=[]; $("status").textContent="Calibrating... Keep still for 4 seconds.";
- $("bar").style.width="0";
- let n=0; const timer=setInterval(()=>{
-   n++; $("bar").style.width=(n*25)+"%";
-   if(n>=4){clearInterval(timer);
-     baseline=samples.length?samples.reduce((a,b)=>a+b,0)/samples.length:9.81;
-     calibrated=true; $("status").textContent="Calibration complete. Tap Start Walking.";
-     $("calibrate").textContent="Start Walking";
-     $("calibrate").className="";
-   }
- },1000);
- $("calibrate").onclick=startWalk;
-};
+if(!running)return;
 
-function startWalk(){
- if(!calibrated){return}
- walking=true; steps=0; lastPeakTime=0; update();
- $("setup").classList.add("hidden"); $("walk").classList.remove("hidden");
- log("Walking started. Baseline "+baseline.toFixed(2));
-}
-function update(){$("steps").textContent=steps;$("distance").textContent=(steps*stepLength).toFixed(1)}
-$("reset").onclick=()=>{steps=0;update();log("Walk reset")}
-$("stop").onclick=()=>{walking=false;$("walk").classList.add("hidden");$("setup").classList.remove("hidden");$("status").textContent="Walk stopped. Tap Start Calibration to begin again."}
-</script>
-</body>
-</html>
+let a=e.accelerationIncludingGravity;
+if(!a)return;
+
+let x=a.x||0;
+let y=a.y||0;
+let z=a.z||0;
+
+let magnitude=Math.sqrt(x*x+y*y+z*z);
+
+gravity=gravity*0.9+magnitude*0.1;
+
+let movement=Math

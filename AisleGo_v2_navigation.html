@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AisleGo</title>
+<style>
+:root{--navy:#111827;--red:#ef2b2d;--bg:#f3f4f6;--card:#fff;--text:#172033;--muted:#667085}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}
+header{background:var(--navy);color:white;text-align:center;padding:20px 16px 18px}
+.logo{font-size:42px;font-weight:800;letter-spacing:-2px}.logo span{color:var(--red)}header p{margin:4px 0 0;font-size:18px;color:#d5d9e2}
+main{max-width:760px;margin:auto;padding:16px}.card{background:var(--card);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 3px 14px #00000010}
+h2{margin:0 0 12px;font-size:23px}.status{font-weight:700;margin:8px 0 14px}
+button,select{width:100%;border:0;border-radius:15px;padding:15px;font-size:17px;font-weight:700;margin-top:9px}
+button{background:#e5e7eb;color:#111827}button.primary{background:var(--red);color:white}button.dark{background:var(--navy);color:white}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{border:1px solid #e2e5ea;border-radius:15px;padding:13px;text-align:center}.metric b{display:block;font-size:24px;margin-top:3px}
+#map{width:100%;height:auto;border-radius:18px;background:#fafafa;border:1px solid #ddd}
+.room{fill:#fff;stroke:#9aa1ad;stroke-width:2}.roomname{font-size:15px;font-weight:bold;fill:#4b5563}.item{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}.itemtext{font-size:11px;fill:#303b65;font-weight:bold}.you{fill:var(--red);stroke:white;stroke-width:3}.target{fill:#facc15;stroke:#7c5d00;stroke-width:2}.route{fill:none;stroke:var(--red);stroke-width:5;stroke-dasharray:9 7;stroke-linecap:round}
+.small{font-size:14px;color:var(--muted);line-height:1.45}.notice{background:#fff7ed;border:1px solid #fed7aa;padding:12px;border-radius:14px;font-size:14px}
+.hidden{display:none}.selected{outline:3px solid #fca5a5}
+</style>
+</head>
+<body>
+<header><div class="logo">AisleG<span>o</span></div><p>Indoor walking navigation</p></header>
+<main>
+
+<section class="card">
+<h2>1. Choose an item</h2>
+<select id="target">
+<option value="tv1">TV 60" JVC — Lounge</option>
+<option value="fan">Fan — Lounge</option>
+<option value="microwave">Microwave — Kitchen</option>
+<option value="fridge">Fridge — Kitchen</option>
+<option value="tv2">TV — Bedroom 1</option>
+<option value="tv3">TV — Bedroom 2</option>
+<option value="bed">Bed — Master Bedroom</option>
+<option value="lamps">Bedside lamps — Master Bedroom</option>
+</select>
+<button class="dark" onclick="startNavigation()">Start navigation</button>
+</section>
+
+<section class="card">
+<h2>2. Indoor map</h2>
+<svg id="map" viewBox="0 0 700 480" aria-label="AisleGo house map">
+  <rect class="room" x="20" y="20" width="260" height="190" rx="8"/><text class="roomname" x="35" y="48">LOUNGE</text>
+  <rect class="room" x="300" y="20" width="180" height="190" rx="8"/><text class="roomname" x="315" y="48">KITCHEN</text>
+  <rect class="room" x="500" y="20" width="180" height="190" rx="8"/><text class="roomname" x="515" y="48">BEDROOM 1</text>
+  <rect class="room" x="20" y="235" width="260" height="220" rx="8"/><text class="roomname" x="35" y="263">MASTER BEDROOM</text>
+  <rect class="room" x="300" y="235" width="180" height="220" rx="8"/><text class="roomname" x="315" y="263">BEDROOM 2</text>
+  <rect class="item" x="170" y="85" width="85" height="34" rx="8" data-id="tv1"/><text class="itemtext" x="180" y="107">TV 60" JVC</text>
+  <rect class="item" x="55" y="145" width="55" height="30" rx="7" data-id="fan"/><text class="itemtext" x="65" y="165">Fan</text>
+  <rect class="item" x="355" y="80" width="75" height="30" rx="7" data-id="microwave"/><text class="itemtext" x="359" y="100">Microwave</text>
+  <rect class="item" x="305" y="145" width="60" height="30" rx="7" data-id="fridge"/><text class="itemtext" x="316" y="165">Fridge</text>
+  <rect class="item" x="565" y="90" width="65" height="30" rx="7" data-id="tv2"/><text class="itemtext" x="575" y="110">TV</text>
+  <rect class="item" x="365" y="325" width="65" height="30" rx="7" data-id="tv3"/><text class="itemtext" x="375" y="345">TV</text>
+  <rect class="item" x="85" y="325" width="85" height="38" rx="7" data-id="bed"/><text class="itemtext" x="103" y="349">Bed</text>
+  <rect class="item" x="185" y="385" width="80" height="30" rx="7" data-id="lamps"/><text class="itemtext" x="194" y="405">Bedside lamps</text>
+  <path id="route" class="route" d="M350 220 L260 220 L260 130 L210 102"/>
+  <circle id="you" class="you" cx="350" cy="220" r="11"/>
+  <circle id="targetDot" class="target" cx="210" cy="102" r="9"/>
+</svg>
+<p id="instruction" class="status">Choose an item and tap Start navigation.</p>
+</section>
+
+<section class="card">
+<h2>3. Walk</h2>
+<div class="grid">
+<div class="metric">Steps<b id="steps">0</b></div>
+<div class="metric">Distance<b id="distance">0.0 m</b></div>
+<div class="metric">Heading<b id="heading">—</b></div>
+<div class="metric">Remaining<b id="remaining">—</b></div>
+</div>
+<button onclick="resetWalk()">Reset walk</button>
+<button class="primary" onclick="stopWalk()">Stop</button>
+<div id="sensorNote" class="notice" style="margin-top:10px">Tap Start navigation and allow motion/orientation permission if Android asks.</div>
+</section>
+
+<section class="card">
+<h2>Important</h2>
+<p class="small">This version is a house-navigation prototype. The map positions are test positions, not a measured floor plan. Step counting gives an estimated movement distance; phone compass heading can be affected by the building and metal objects. The next stage is to calibrate the real house and item locations.</p>
+</section>
+</main>
+
+<script>
+const items={
+tv1:{name:'TV 60" JVC',room:'Lounge',x:210,y:102},
+fan:{name:'Fan',room:'Lounge',x:82,y:160},
+microwave:{name:'Microwave',room:'Kitchen',x:392,y:95},
+fridge:{name:'Fridge',room:'Kitchen',x:335,y:160},
+tv2:{name:'TV',room:'Bedroom 1',x:598,y:105},
+tv3:{name:'TV',room:'Bedroom 2',x:398,y:340},
+bed:{name:'Bed',room:'Master Bedroom',x:128,y:344},
+lamps:{name:'Bedside lamps',room:'Master Bedroom',x:225,y:400}
+};
+let steps=0, distance=0, heading=null, walking=false, targetId='tv1';
+let pos={x:350,y:220}, start={x:350,y:220}, lastStep=0;
+
+function setTarget(){
+ targetId=document.getElementById('target').value;
+ document.querySelectorAll('.item').forEach(e=>e.classList.toggle('selected',e.dataset.id===targetId));
+ const t=items[targetId]; document.getElementById('targetDot').setAttribute('cx',t.x);document.getElementById('targetDot').setAttribute('cy',t.y);
+ updateRoute(); updateInstruction();
+}
+document.getElementById('target').addEventListener('change',setTarget);
+
+function startNavigation(){
+ walking=true; steps=0; distance=0; pos={...start}; lastStep=0;
+ update(); setTarget();
+ document.getElementById('sensorNote').textContent='Walking tracker is active. Keep the phone in the same position while testing.';
+ requestMotion();
+}
+function resetWalk(){steps=0;distance=0;pos={...start};update();updateRoute();updateInstruction();}
+function stopWalk(){walking=false;document.getElementById('instruction').textContent='Navigation stopped. Tap Start navigation to continue.';}
+
+function requestMotion(){
+ if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+   DeviceMotionEvent.requestPermission().then(r=>{if(r==='granted')listenMotion();}).catch(()=>{listenMotion();});
+ }else listenMotion();
+ if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+   DeviceOrientationEvent.requestPermission().catch(()=>{});
+ }
+}
+let motionListening=false;
+function listenMotion(){if(motionListening)return;motionListening=true;window.addEventListener('devicemotion',onMotion);window.addEventListener('deviceorientationabsolute',onOrientation);window.addEventListener('deviceorientation',onOrientation);}
+let mag=9.8, above=false;
+function onMotion(e){
+ if(!walking)return;
+ const a=e.accelerationIncludingGravity;if(!a)return;
+ const x=a.x||0,y=a.y||0,z=a.z||0; mag=Math.sqrt(x*x+y*y+z*z);
+ const now=Date.now();
+ if(mag>12.2 && !above && now-lastStep>300){above=true; lastStep=now; steps++; distance+=0.72; moveByStep();}
+ if(mag<10.8)above=false;
+ update();
+}
+function onOrientation(e){
+ let h=e.webkitCompassHeading;
+ if(typeof h!=='number') h=typeof e.alpha==='number'?((360-e.alpha)%360):null;
+ if(h!=null){heading=Math.round(h);document.getElementById('heading').textContent=heading+'°';updateInstruction();}
+}
+function moveByStep(){
+ const t=items[targetId];
+ const dx=t.x-pos.x,dy=t.y-pos.y, d=Math.hypot(dx,dy)||1;
+ const amount=10;
+ pos.x += dx/d*amount; pos.y += dy/d*amount;
+ pos.x=Math.max(30,Math.min(670,pos.x));pos.y=Math.max(30,Math.min(445,pos.y));
+ if(d<12){pos.x=t.x;pos.y=t.y;walking=false;document.getElementById('instruction').textContent='🎯 You reached '+t.name+'!';}
+ updateRoute();
+}
+function updateRoute(){
+ const you=document.getElementById('you');you.setAttribute('cx',pos.x);you.setAttribute('cy',pos.y);
+ const t=items[targetId];document.getElementById('route').setAttribute('d',`M${pos.x} ${pos.y} L${t.x} ${t.y}`);
+ const remainingPx=Math.hypot(t.x-pos.x,t.y-pos.y);
+ document.getElementById('remaining').textContent=(remainingPx/14).toFixed(1)+' m';
+}
+function updateInstruction(){
+ if(!walking)return;
+ const t=items[targetId],d=Math.hypot(t.x-pos.x,t.y-pos.y)/14;
+ if(d<0.6){document.getElementById('instruction').textContent='🎯 You are at '+t.name+' — '+t.room;}
+ else if(heading!=null)document.getElementById('instruction').textContent='Walk toward '+t.name+' in the '+heading+'° direction • '+d.toFixed(1)+' m remaining';
+ else document.getElementById('instruction').textContent='Walk toward '+t.name+' • '+d.toFixed(1)+' m remaining';
+}
+function update(){
+ document.getElementById('steps').textContent=steps;
+ document.getElementById('distance').textContent=distance.toFixed(1)+' m';
+ updateRoute();updateInstruction();
+}
+setTarget();update();
+</script>
+</body>
+</html>
